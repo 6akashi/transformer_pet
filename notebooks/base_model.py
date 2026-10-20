@@ -44,13 +44,14 @@ print(f"Sample tokens shape: {sample_tokens['input_ids'].shape}")
 #%%
 # ###GET CLS EMBEDDINGS
 def get_cls_embeddings(texts, batch_size=32, max_length=128):
+
     all_embeddings = []
 
     with torch.no_grad():
         for i in range(0, len(texts), batch_size):
             batch_texts = texts[i:i+batch_size]
             inputs = tokenize_texts(batch_texts, max_length=max_length)
-
+            
             outputs = model(**inputs)
 
             last_hidden_state = outputs.last_hidden_state
@@ -63,18 +64,26 @@ test_embeddings = get_cls_embeddings(sample_texts, batch_size=2)
 print(f"Test embeddings shape: {test_embeddings.shape}")
 
 #%%
+import torch
+print("CUDA available:", torch.cuda.is_available())
+print("Device name:", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "No GPU")
+print("PyTorch version:", torch.version.__version__)
+#%%
 # ###LOGISTIC REGRESSION
 from datasets import load_dataset
 
 #%%
-dataset = load_dataset("stanfordnlp/imdb")
+dataset = pd.read_csv('../dataset/archive/IMDB Dataset.csv').head(5000)
 print(dataset)
+print(dataset.columns)
 #%%
-train_df = dataset["train"].to_pandas()
-test_df = dataset["test"].to_pandas()
-
-texts = train_df["text"].tolist() + test_df["text"].tolist()
-y = train_df["label"].values.tolist() + test_df["label"].values.tolist()
+train_df = dataset.head(4500)
+test_df = dataset.head(500)
+print(train_df)
+print(test_df)
+#%%
+texts = train_df['review'].tolist() + test_df['review'].tolist()
+y = train_df['sentiment'].values.tolist() + test_df['sentiment'].values.tolist()
 
 X = get_cls_embeddings(texts, batch_size=32)
 
@@ -97,5 +106,12 @@ print(f"Macro F1: {macro_f1:.4f}")
 
 #%%
 results_text = f"Basline (DistilBERT + Logistic Regression)\nMacro F1: {macro_f1:.4f}"
-with open("results.txt", "w") as f:
+with open("baseline_results.txt", "w") as f:
     f.write(results_text)
+
+# %%
+import joblib
+joblib.dump(clf, 'baseline_model.pkl')
+joblib.dump(tokenizer, 'baseline_vectorizer.pkl')
+print("Success")
+# %%

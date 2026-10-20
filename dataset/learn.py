@@ -5,9 +5,9 @@ from sklearn.metrics import accuracy_score, f1_score
 from model import model
 from data_loader import val_loader, train_loader
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = model.to(device)
-
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# model = model.to(device)
+device = "cpu"
 optimizer = AdamW(model.parameters(), lr=2e-5)
 
 def train_epoch(model, dataloader, optimizer, device):
